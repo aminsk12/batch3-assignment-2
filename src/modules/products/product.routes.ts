@@ -4,12 +4,12 @@ import { createProduct, deleteProduct, getAllProducts, getProductById, searchPro
 
 const router = express.Router();
 
-router.post('/products', createProduct);
-router.get('/products', getAllProducts);
-router.get('/products/:productId', getProductById);
-router.put('/products/:productId', updateProduct);
-router.delete('/products/:productId', deleteProduct);
-router.get('/products/search', searchProducts);
+router.post('/', createProduct);
+router.get('/', getAllProducts);
+router.get('/:productId', getProductById);
+router.put('/:productId', updateProduct);
+router.delete('/:productId', deleteProduct);
+router.get('/search', searchProducts);
 
 
 export const ProductRoutes = router;

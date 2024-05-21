@@ -6,10 +6,10 @@ const app = express();
 //parsers
 app.use(express.json());
 
-app.use('/api', ProductRoutes);
+app.use('/api/products', ProductRoutes);
 
 app.get("/", (req: Request, res: Response) => {
-  res.send("Hello Next!");
+  res.send("Hello Next.............................!");
 });
 
 export default app;

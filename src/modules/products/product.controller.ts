@@ -22,9 +22,6 @@ export const productSchema = Joi.object({
   }).required(),
 });
 
-
- 
-
 export const createProduct = async (req: Request, res: Response) => {
   const { error } = productSchema.validate(req.body);
   if (error)
