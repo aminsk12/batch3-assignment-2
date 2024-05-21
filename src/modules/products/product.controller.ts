@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import Joi from "joi";
 import ProductModel from "./product.model";
+import { ProductServices } from "./product.service";
 
 export const productSchema = Joi.object({
   name: Joi.string().required(),
@@ -30,12 +31,13 @@ export const createProduct = async (req: Request, res: Response) => {
       .json({ success: false, message: error.details[0].message });
 
   try {
-    const product = new ProductModel(req.body);
-    await product.save();
+    const prduct = req.body;
+    const result = await ProductServices.createProductIntoDb(prduct);
+
     res.status(201).json({
       success: true,
       message: "Product created successfully!",
-      data: product,
+      data: result,
     });
   } catch (err) {
     res.status(500).json({ success: false, message: "Internal server error" });
@@ -44,7 +46,7 @@ export const createProduct = async (req: Request, res: Response) => {
 
 export const getAllProducts = async (req: Request, res: Response) => {
   try {
-    const products = await ProductModel.find();
+    const products = await ProductServices.getAllProductIntoDb();
     res.status(200).json({
       success: true,
       message: "Products fetched successfully!",
@@ -57,7 +59,8 @@ export const getAllProducts = async (req: Request, res: Response) => {
 
 export const getProductById = async (req: Request, res: Response) => {
   try {
-    const product = await ProductModel.findById(req.params.productId);
+    const data = req.params.productId;
+    const product = await ProductServices.getsingleProductIntoDb(data);
     if (!product)
       return res
         .status(404)
@@ -81,9 +84,11 @@ export const updateProduct = async (req: Request, res: Response) => {
       .json({ success: false, message: error.details[0].message });
 
   try {
-    const product = await ProductModel.findByIdAndUpdate(
-      req.params.productId,
-      req.body,
+    const productId = req.params.productId;
+    const updateData = req.body;
+    const product = await ProductServices.updateProductIntoDb(
+      productId,
+      updateData,
       { new: true }
     );
     if (!product)
@@ -103,7 +108,9 @@ export const updateProduct = async (req: Request, res: Response) => {
 
 export const deleteProduct = async (req: Request, res: Response) => {
   try {
-    const product = await ProductModel.findByIdAndDelete(req.params.productId);
+    const product = await ProductServices.delitProductIntoDb(
+      req.params.productId
+    );
     if (!product)
       return res
         .status(404)
@@ -112,25 +119,37 @@ export const deleteProduct = async (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       message: "Product deleted successfully!",
-      data: null,
+      data: product,
     });
   } catch (err) {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
-export const searchProducts = async (req: Request, res: Response) => {
-  const { searchTerm } = req.query;
+export const getSerchProducts = async (req: Request, res: Response) => {
   try {
-    const products = await ProductModel.find({
-      $text: { $search: searchTerm as string },
-    });
+    const { searchTerm } = req.query;
+    const result = await ProductServices.searchProductsIntoDB(
+      searchTerm as string
+    );
+    console.log(result);
+    if (result.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: `${searchTerm} Product not found`,
+      });
+    }
+
     res.status(200).json({
       success: true,
-      message: `Products matching search term '${searchTerm}' fetched successfully!`,
-      data: products,
+      message: `Product ${searchTerm ? "searched" : "fetched"} successfully`,
+      data: result,
     });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      message: "Could not fetch All Products!",
+      error: err,
+    });
   }
 };
