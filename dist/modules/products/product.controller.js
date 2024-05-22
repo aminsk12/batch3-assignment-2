@@ -8,43 +8,23 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.searchProducts = exports.deleteProduct = exports.updateProduct = exports.getProductById = exports.getAllProducts = exports.createProduct = exports.productSchema = void 0;
-const joi_1 = __importDefault(require("joi"));
-const product_model_1 = __importDefault(require("./product.model"));
-exports.productSchema = joi_1.default.object({
-    name: joi_1.default.string().required(),
-    description: joi_1.default.string().required(),
-    price: joi_1.default.number().required(),
-    category: joi_1.default.string().required(),
-    tags: joi_1.default.array().items(joi_1.default.string()).required(),
-    variants: joi_1.default.array()
-        .items(joi_1.default.object({
-        type: joi_1.default.string().required(),
-        value: joi_1.default.string().required(),
-    }))
-        .required(),
-    inventory: joi_1.default.object({
-        quantity: joi_1.default.number().required(),
-        inStock: joi_1.default.boolean().required(),
-    }).required(),
-});
+exports.getSerchProducts = exports.deleteProduct = exports.updateProduct = exports.getProductById = exports.getAllProducts = exports.createProduct = void 0;
+const product_service_1 = require("./product.service");
+const product_validator_1 = require("./product.validator");
 const createProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { error } = exports.productSchema.validate(req.body);
+    const { error } = product_validator_1.validatorProductSchema.validate(req.body);
     if (error)
         return res
             .status(400)
             .json({ success: false, message: error.details[0].message });
     try {
-        const product = new product_model_1.default(req.body);
-        yield product.save();
+        const prduct = req.body;
+        const result = yield product_service_1.ProductServices.createProductIntoDb(prduct);
         res.status(201).json({
             success: true,
             message: "Product created successfully!",
-            data: product,
+            data: result,
         });
     }
     catch (err) {
@@ -54,7 +34,7 @@ const createProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 exports.createProduct = createProduct;
 const getAllProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const products = yield product_model_1.default.find();
+        const products = yield product_service_1.ProductServices.getAllProductIntoDb();
         res.status(200).json({
             success: true,
             message: "Products fetched successfully!",
@@ -68,7 +48,8 @@ const getAllProducts = (req, res) => __awaiter(void 0, void 0, void 0, function*
 exports.getAllProducts = getAllProducts;
 const getProductById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const product = yield product_model_1.default.findById(req.params.productId);
+        const data = req.params.productId;
+        const product = yield product_service_1.ProductServices.getsingleProductIntoDb(data);
         if (!product)
             return res
                 .status(404)
@@ -85,13 +66,15 @@ const getProductById = (req, res) => __awaiter(void 0, void 0, void 0, function*
 });
 exports.getProductById = getProductById;
 const updateProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { error } = exports.productSchema.validate(req.body);
+    const { error } = product_validator_1.validatorProductSchema.validate(req.body);
     if (error)
         return res
             .status(400)
             .json({ success: false, message: error.details[0].message });
     try {
-        const product = yield product_model_1.default.findByIdAndUpdate(req.params.productId, req.body, { new: true });
+        const productId = req.params.productId;
+        const updateData = req.body;
+        const product = yield product_service_1.ProductServices.updateProductIntoDb(productId, updateData, { new: true });
         if (!product)
             return res
                 .status(404)
@@ -109,7 +92,7 @@ const updateProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 exports.updateProduct = updateProduct;
 const deleteProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const product = yield product_model_1.default.findByIdAndDelete(req.params.productId);
+        const product = yield product_service_1.ProductServices.delitProductIntoDb(req.params.productId);
         if (!product)
             return res
                 .status(404)
@@ -117,7 +100,7 @@ const deleteProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         res.status(200).json({
             success: true,
             message: "Product deleted successfully!",
-            data: null,
+            data: product,
         });
     }
     catch (err) {
@@ -125,20 +108,29 @@ const deleteProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.deleteProduct = deleteProduct;
-const searchProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { searchTerm } = req.query;
+const getSerchProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const products = yield product_model_1.default.find({
-            $text: { $search: searchTerm },
-        });
+        const { searchTerm } = req.query;
+        const result = yield product_service_1.ProductServices.searchProductsIntoDB(searchTerm);
+        console.log(result);
+        if (result.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: `${searchTerm} Product not found`,
+            });
+        }
         res.status(200).json({
             success: true,
-            message: `Products matching search term '${searchTerm}' fetched successfully!`,
-            data: products,
+            message: `Product ${searchTerm ? "searched" : "fetched"} successfully`,
+            data: result,
         });
     }
     catch (err) {
-        res.status(500).json({ success: false, message: "Internal server error" });
+        res.status(500).json({
+            success: false,
+            message: "Could not fetch All Products!",
+            error: err,
+        });
     }
 });
-exports.searchProducts = searchProducts;
+exports.getSerchProducts = getSerchProducts;

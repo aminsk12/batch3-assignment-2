@@ -12,5 +12,5 @@ router.get('/', product_controller_1.getAllProducts);
 router.get('/:productId', product_controller_1.getProductById);
 router.put('/:productId', product_controller_1.updateProduct);
 router.delete('/:productId', product_controller_1.deleteProduct);
-router.get('/search', product_controller_1.searchProducts);
+router.get('/searchTerm', product_controller_1.getSerchProducts);
 exports.ProductRoutes = router;

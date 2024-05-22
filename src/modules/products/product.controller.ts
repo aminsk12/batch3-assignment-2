@@ -1,29 +1,9 @@
 import { Request, Response } from "express";
-import Joi from "joi";
 import { ProductServices } from "./product.service";
-
-export const productSchema = Joi.object({
-  name: Joi.string().required(),
-  description: Joi.string().required(),
-  price: Joi.number().required(),
-  category: Joi.string().required(),
-  tags: Joi.array().items(Joi.string()).required(),
-  variants: Joi.array()
-    .items(
-      Joi.object({
-        type: Joi.string().required(),
-        value: Joi.string().required(),
-      })
-    )
-    .required(),
-  inventory: Joi.object({
-    quantity: Joi.number().required(),
-    inStock: Joi.boolean().required(),
-  }).required(),
-});
+import { validatorProductSchema } from "./product.validator";
 
 export const createProduct = async (req: Request, res: Response) => {
-  const { error } = productSchema.validate(req.body);
+  const { error } = validatorProductSchema.validate(req.body);
   if (error)
     return res
       .status(400)
@@ -76,7 +56,7 @@ export const getProductById = async (req: Request, res: Response) => {
 };
 
 export const updateProduct = async (req: Request, res: Response) => {
-  const { error } = productSchema.validate(req.body);
+  const { error } = validatorProductSchema.validate(req.body);
   if (error)
     return res
       .status(400)
@@ -144,7 +124,7 @@ export const getSerchProducts = async (req: Request, res: Response) => {
       message: `Product ${searchTerm ? "searched" : "fetched"} successfully`,
       data: result,
     });
-  } catch (err: any) {
+  } catch (err) {
     res.status(500).json({
       success: false,
       message: "Could not fetch All Products!",
