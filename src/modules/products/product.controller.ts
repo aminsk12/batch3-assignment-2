@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import Joi from "joi";
-import ProductModel from "./product.model";
 import { ProductServices } from "./product.service";
 
 export const productSchema = Joi.object({
