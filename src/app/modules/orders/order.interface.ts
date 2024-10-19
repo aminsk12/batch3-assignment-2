@@ -1,8 +1,6 @@
-import mongoose, { Document} from 'mongoose';
-
-export interface Order extends Document {
+export type Order = {
   email: string;
-  productId: mongoose.Types.ObjectId;
+  productId: string;
   price: number;
   quantity: number;
-}
+};

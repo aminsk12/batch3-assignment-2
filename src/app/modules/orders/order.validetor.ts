@@ -1,8 +1,13 @@
-import Joi from "joi";
+import { z } from 'zod';
 
- export const orderSchema = Joi.object({
-    email: Joi.string().email().required(),
-    productId: Joi.string().required(),
-    price: Joi.number().required(),
-    quantity: Joi.number().required(),
-  });
+const orderValidationSchema = z.object({
+  email: z.string().email({ message: 'Invalid email address' }),
+  productId: z.string().min(1, { message: 'Product ID is required' }),
+  price: z.number().positive({ message: 'Price must be a positive number' }),
+  quantity: z
+    .number()
+    .int()
+    .positive({ message: 'Quantity must be a positive integer' }),
+});
+
+export default orderValidationSchema;

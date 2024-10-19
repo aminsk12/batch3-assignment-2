@@ -1,69 +1,66 @@
-import ProductModel from "../products/product.model";
-import { Request, Response } from "express";
-import OrderModel from "./order.model";
-import { orderSchema } from "./order.validetor";
+import { Request, Response } from 'express';
+import { OrderService } from './order.services';
+import orderValidationSchema from './order.validetor';
 
-export const createOrder = async (req: Request, res: Response) => {
-  const { error } = orderSchema.validate(req.body);
-  if (error)
-    return res
-      .status(400)
-      .json({ success: false, message: error.details[0].message });
 
+//createOrder Api
+
+const createOrder = async (req: Request, res: Response) => {
   try {
-    const { productId, quantity } = req.body;
-    const product = await ProductModel.findById(productId);
+    const { orders } = req.body;
 
-    if (!product)
-      return res
-        .status(404)
-        .json({ success: false, message: "Product not found" });
-    if (product.inventory.quantity < quantity)
-      return res.status(400).json({
-        success: false,
-        message: "Insufficient quantity available in inventory",
-      });
+    //orderValidation with Zod
 
-    product.inventory.quantity -= quantity;
-    product.inventory.inStock = product.inventory.quantity > 0;
-    await product.save();
+    const zodValidationOrder = orderValidationSchema.parse(orders);
 
-    const order = new OrderModel(req.body);
-    await order.save();
+    const result = await OrderService.createOrderIntoDB(zodValidationOrder);
 
-    res.status(201).json({
-      success: true,
-      message: "Order created successfully!",
-      data: order,
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-};
-
-export const getAllOrders = async (req: Request, res: Response) => {
-  try {
-    const orders = await OrderModel.find();
     res.status(200).json({
       success: true,
-      message: "Orders fetched successfully!",
-      data: orders,
+      message: 'Order created successfully!',
+      data: result,
     });
   } catch (err) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: 'Something went wrong!',
+      error: err,
+    });
   }
 };
 
-export const getOrdersByEmail = async (req: Request, res: Response) => {
+//getAllOrder Api
+
+const getAllAndSearchOrder = async (req: Request, res: Response) => {
   const { email } = req.query;
   try {
-    const orders = await OrderModel.find({ email: email as string });
-    res.status(200).json({
-      success: true,
-      message: "Orders fetched successfully for user email!",
-      data: orders,
-    });
+    const result = await OrderService.getAllOrderAndSearchIntoDB(
+      email as string,
+    );
+
+    if (email) {
+      res.status(200).json({
+        success: true,
+        message: 'Orders fetched successfully for user email!',
+        data: result,
+      });
+    } else {
+      res.status(200).json({
+        success: true,
+        message: 'Orders fetched successfully!',
+        data: result,
+      });
+    }
   } catch (err) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: 'Something went wrong!',
+      error: err,
+    });
   }
+};
+
+export const OrderController = {
+  createOrder,
+  getAllAndSearchOrder,
 };

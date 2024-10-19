@@ -1,54 +1,74 @@
-import { Product } from "./product.interface";
-import ProductModel from "./product.model";
+import { ProductModel } from './product.model';
+import { Product } from './product.interface';
 
-const createProductIntoDb = async (product: Product) => {
+//createProduct Api
+
+const createProductIntoDB = async (product: Product) => {
   const result = await ProductModel.create(product);
   return result;
 };
 
-const getAllProductIntoDb = async () => {
-  const result = await ProductModel.find();
+//getAllProduct and search Api
+
+const getAllProductAndSearchIntoDB = async (searchTerm: string) => {
+  let result;
+  if (searchTerm) {
+    result = await ProductModel.find({
+      $or: [
+        { name: { $regex: searchTerm, $options: 'i' } },
+        { description: { $regex: searchTerm, $options: 'i' } },
+        { category: { $regex: searchTerm, $options: 'i' } },
+        { tags: { $regex: searchTerm, $options: 'i' } },
+      ],
+    });
+  } else {
+    result = await ProductModel.find();
+  }
   return result;
 };
-const getsingleProductIntoDb = async (id: string) => {
-  const result = await ProductModel.findById(id);
+
+//Product by ID Api
+
+const getProductByIdInToDB = async (productId: string) => {
+  const result = await ProductModel.findOne({ _id: productId });
   return result;
 };
-const updateProductIntoDb = async (
-  id: string,
-  updateData: any,
-  options = { new: true }
+
+//Update Product Api
+
+const updateProductByIdInToDB = async (
+  productId: string,
+  updateData: Product,
 ) => {
-  const result = await ProductModel.findByIdAndUpdate(id, updateData, options);
+  const result = await ProductModel.findByIdAndUpdate(
+    { _id: productId },
+    updateData,
+    {
+      new: true,
+      runValidators: true,
+    },
+  );
   return result;
 };
 
-const delitProductIntoDb = async (id: string) => {
-  const result = await ProductModel.findByIdAndDelete(id);
+//Delete a Product Api
+
+const deleteProductByIdInToDB = async (productId: string) => {
+  const result = await ProductModel.deleteOne({ _id: productId });
   return result;
 };
 
-const searchProductsIntoDB = async (searchTerm: string) => {
-  const query = searchTerm
-    ? {
-        $or: [
-          { name: { $regex: searchTerm, $options: "i" } },
-          { description: { $regex: searchTerm, $options: "i" } },
-          { category: { $regex: searchTerm, $options: "i" } },
-          { tags: { $regex: searchTerm, $options: "i" } },
-        ],
-      }
-    : {};
+//Search a product Api
 
-  const result = await ProductModel.find(query);
-  return result;
-};
+// const searchProductName = async () => {
 
-export const ProductServices = {
-  createProductIntoDb,
-  getAllProductIntoDb,
-  getsingleProductIntoDb,
-  updateProductIntoDb,
-  delitProductIntoDb,
-  searchProductsIntoDB,
+//   return result;
+// };
+
+export const ProductService = {
+  createProductIntoDB,
+  getAllProductAndSearchIntoDB,
+  getProductByIdInToDB,
+  updateProductByIdInToDB,
+  deleteProductByIdInToDB,
 };

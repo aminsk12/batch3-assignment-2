@@ -1,22 +1,30 @@
-import Joi from "joi";
+import { z } from 'zod';
 
-export const validatorProductSchema = Joi.object({
-    name: Joi.string().required(),
-    description: Joi.string().required(),
-    price: Joi.number().required(),
-    category: Joi.string().required(),
-    tags: Joi.array().items(Joi.string()).required(),
-    variants: Joi.array()
-      .items(
-        Joi.object({
-          type: Joi.string().required(),
-          value: Joi.string().required(),
-        })
-      )
-      .required(),
-    inventory: Joi.object({
-      quantity: Joi.number().required(),
-      inStock: Joi.boolean().required(),
-    }).required(),
-  });
-  
+// Define the Variant schema
+export const variantValidationSchema = z.object({
+  type: z.string().min(1, { message: 'Variant type is required.' }),
+  value: z.string().min(1, { message: 'Variant value is required.' }),
+});
+
+// Define the Inventory schema
+export const inventoryValidationSchema = z.object({
+  quantity: z
+    .number()
+    .min(0, { message: 'Inventory quantity cannot be less than 0.' }),
+  inStock: z.boolean({ required_error: 'In-stock status is required.' }),
+});
+
+// Define the Product schema
+export const productValidationSchema = z.object({
+  name: z.string().min(1, { message: 'Product name is required.' }),
+  description: z
+    .string()
+    .min(10, { message: 'Product description is required.' }),
+  price: z.number().min(0, { message: 'Product price cannot be less than 0.' }),
+  category: z.string().min(1, { message: 'Product category is required.' }),
+  tags: z.array(z.string()).min(1, { message: 'Product tags are required.' }),
+  variants: z
+    .array(variantValidationSchema)
+    .min(1, { message: 'Product variants are required.' }),
+  inventory: inventoryValidationSchema,
+});
